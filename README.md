@@ -381,7 +381,7 @@ MIT License — see `LICENSE` file.
 
 **Rishab Chakravarty**
 - GitHub: [@Rchak12](https://github.com/Rchak12)
-- Email: [your-email@purdue.edu]
+- Email: chakr138@purdue.edu
 - Affiliation: Purdue University, CS 592
 
 ---
