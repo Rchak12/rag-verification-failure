@@ -1,0 +1,624 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\setstretch{1.15}
+
+\title{\textbf{When Verification Fails: \\
+Exposing False Positives in Similarity-Based Claim Verification for Retrieval-Augmented Generation}}
+
+\author{Rishab Chakravarty\\
+CS 592: Automated Reasoning and Machine Learning Integration\\
+Purdue University}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\vspace{-1em}
+
+\begin{abstract}
+Large language models frequently produce unsupported claims, motivating the development of verification systems for Retrieval-Augmented Generation (RAG). This work investigates whether claim-level verification using Natural Language Inference (NLI) can improve factual grounding in biomedical question answering. We implemented a three-system comparison (RAG baseline, claim removal, claim rewriting) and conducted experiments across multiple conditions: clean retrieval, adversarial retrieval with conflicting evidence, and forced-answer prompting. Contrary to expectations, we found GPT-4o exhibits near-zero hallucination rates across all conditions, achieving 100\% claim verification pass rates. However, this apparent success masks a critical failure: \textbf{with 18\% accuracy but 0\% unsupported claims, we identified an 82\% false positive problem} where verified claims contribute to incorrect answers. Manual analysis of 41 false positive cases reveals that GPT-4o systematically exploits similarity-based verification through strategic hedging—producing vague claims (\textit{``may exist,'' ``less understood''}) that pass NLI checks but avoid committing to definitive answers. Our findings demonstrate that semantic similarity verification has systematic blind spots for high-calibration models, creating perverse incentives for equivocation over precision. We provide recommendations for question-aware verification mechanisms that enforce answer commitment beyond semantic plausibility.
+\end{abstract}
+
+\section{Introduction}
+
+Large language models (LLMs) have demonstrated remarkable capabilities in natural language generation and question answering \cite{brown2020language}. However, these systems frequently produce fluent but factually unsupported statements—a phenomenon known as hallucination \cite{ji2023survey}. This problem is particularly acute in high-stakes domains such as biomedicine, where factual reliability is essential for clinical decision-making and scientific research.
+
+Retrieval-Augmented Generation (RAG) addresses this challenge by grounding model outputs in retrieved evidence documents \cite{lewis2020retrieval}. Despite this architectural improvement, RAG systems can still produce claims that are not faithfully supported by retrieved passages. Recent work has proposed \textbf{claim-level verification} as an additional safety layer, where generated statements are explicitly checked against source documents before presentation to users \cite{gao2023rarr, bohnet2022attributed}.
+
+\subsection{Original Research Questions}
+
+This project initially aimed to answer:
+
+\begin{enumerate}
+\item Does claim-level NLI verification reduce unsupported claims in RAG systems?
+\item What is the optimal repair strategy: removing unsupported claims or rewriting them?
+\item How do verification thresholds affect the precision-recall tradeoff?
+\end{enumerate}
+
+\subsection{A Critical Discovery}
+
+Our experiments revealed an unexpected result: when using GPT-4o \cite{openai2024gpt4o} as the generation model, the system exhibited \textbf{near-zero hallucination rates} across all experimental conditions. All generated claims passed NLI verification (0\% unsupported rate), rendering the original research questions moot—there were no hallucinations to verify.
+
+However, deeper analysis uncovered a more fundamental problem: \textbf{high verification pass rates do not guarantee factual correctness}. Despite 100\% of claims being marked ``supported,'' only 18\% of answers were correct, revealing an \textbf{82\% false positive problem} where verified claims contribute to wrong answers.
+
+\subsection{Reframed Contribution}
+
+Rather than demonstrating verification's benefits, this work exposes its limitations. Our main contributions are:
+
+\begin{itemize}
+\item \textbf{Empirical demonstration} of an 82\% false positive rate in similarity-based claim verification
+\item \textbf{Failure mode taxonomy} identifying hedging as the dominant exploitation strategy (71\% of false positives)
+\item \textbf{Mechanistic analysis} of why semantic similarity fails for high-calibration models
+\item \textbf{Recommendations} for question-aware verification beyond semantic plausibility
+\end{itemize}
+
+This work demonstrates that as LLMs become more sophisticated, they \textit{learn to exploit} verification systems rather than being constrained by them.
+
+\section{Related Work}
+
+\subsection{Retrieval-Augmented Generation}
+
+RAG systems combine dense retrieval with neural generation to ground outputs in external knowledge \cite{lewis2020retrieval, izacard2021leveraging}. While RAG improves factual accuracy over pure generation, it does not eliminate hallucinations when models extrapolate beyond retrieved evidence.
+
+\subsection{Claim Verification for Factuality}
+
+Recent work has explored verifying generated claims against source documents. RARR \cite{gao2023rarr} uses a retrieve-revise-rewrite pipeline to improve attribution. AttributedQA \cite{bohnet2022attributed} explicitly models claim-evidence pairs. Our work differs by exposing failure modes when verification faces strategically hedged outputs from high-quality models.
+
+\subsection{Hallucination Detection}
+
+Prior work has developed hallucination detection methods using semantic similarity \cite{honovich2021qags}, NLI \cite{maynez2020faithfulness}, and question generation \cite{durmus2020feqa}. However, these approaches assume models produce \textit{blatantly wrong} claims. We show that modern models like GPT-4o instead produce \textit{subtly evasive} claims that exploit verification weaknesses.
+
+\subsection{Model Calibration and Uncertainty}
+
+Work on model calibration \cite{guo2017calibration} has shown that well-calibrated models can express uncertainty through hedging. While beneficial for open-ended tasks, we demonstrate this creates adversarial dynamics with verification systems in constrained settings (yes/no questions).
+
+\section{Problem Formulation}
+
+\subsection{Original Task: Verified RAG}
+
+Given:
+\begin{itemize}
+\item Question $q$ (yes/no/maybe)
+\item Retrieved documents $D = \{d_1, ..., d_k\}$
+\item Generation model $G$
+\item Verification model $V$
+\end{itemize}
+
+Generate answer $a$ with claims $C = \{c_1, ..., c_n\}$ where each claim $c_i$ is verified:
+\[
+V(c_i, D) > \tau \implies \text{supported}
+\]
+
+Unsupported claims are either removed or rewritten.
+
+\textbf{Expected outcome:} Verification reduces unsupported claims while maintaining accuracy.
+
+\subsection{Discovered Problem: False Positives}
+
+What we actually found:
+\[
+V(c_i, D) > \tau \quad \forall c_i \in C
+\]
+\vspace{-0.5em}
+\[
+\text{Accuracy}(a, \text{gold}) = 18\%
+\]
+
+\textbf{Implication:} High verification pass rate (100\%) does not imply correctness (18\%). This reveals an 82\% false positive problem.
+
+\subsection{Reframed Research Questions}
+
+\begin{enumerate}
+\item Why do semantically verified claims contribute to wrong answers?
+\item What strategies do high-calibration models use to exploit verification?
+\item Can threshold tuning fix this, or is it a fundamental limitation?
+\end{enumerate}
+
+\section{System Architecture}
+
+We implemented a three-system comparison to isolate verification effects:
+
+\begin{description}
+\item[\textbf{System A: RAG Baseline}] Retrieve $\to$ Generate $\to$ Evaluate
+\item[\textbf{System B: REMOVE}] Retrieve $\to$ Generate $\to$ Verify $\to$ \textit{Delete} unsupported $\to$ Evaluate
+\item[\textbf{System C: REWRITE}] Retrieve $\to$ Generate $\to$ Verify $\to$ \textit{Rewrite} unsupported $\to$ Evaluate
+\end{description}
+
+All systems use identical retrieval and generation components, differing only in the repair strategy applied to unsupported claims.
+
+\subsection{Components}
+
+\textbf{Retrieval:}
+\begin{itemize}
+\item Encoder: \texttt{sentence-transformers/all-MiniLM-L6-v2}
+\item Index: FAISS with inner product similarity
+\item Top-$k$: $k=3$ passages per query
+\end{itemize}
+
+\textbf{Generation:}
+\begin{itemize}
+\item Model: GPT-4o (\texttt{gpt-4o-2024-08-06})
+\item Prompt: Structured QA with citation requirements
+\item Output: Answer label (yes/no/maybe) + summary + claims
+\end{itemize}
+
+\textbf{Verification:}
+\begin{itemize}
+\item Method: Natural Language Inference (NLI)
+\item Model: \texttt{cross-encoder/nli-deberta-v3-small}
+\item Threshold: $\tau = 0.5$ (entailment threshold)
+\end{itemize}
+
+\textbf{Repair:}
+\begin{itemize}
+\item REMOVE: Delete unsupported claims, regenerate summary
+\item REWRITE: Prompt GPT-4o to rewrite claim based on evidence
+\end{itemize}
+
+\section{Experimental Setup}
+
+\subsection{Dataset}
+
+We used PubMedQA \cite{jin2019pubmedqa}, a biomedical question-answering dataset with:
+\begin{itemize}
+\item 1000 yes/no/maybe questions
+\item PubMed abstract passages as evidence
+\item Expert-annotated gold labels
+\end{itemize}
+
+Primary experiments: $N=50$ examples (forced-answer mode)\\
+Supporting experiments: $N=100$ examples (clean and adversarial retrieval)
+
+\subsection{Experimental Conditions}
+
+\subsubsection{Experiment 1: Clean Retrieval ($N=100$)}
+
+Standard RAG setup with top-$k=3$ FAISS retrieval. No noise injection.
+
+\textbf{Goal:} Establish baseline hallucination rate for GPT-4o.
+
+\subsubsection{Experiment 2: Adversarial Retrieval ($N=100$)}
+
+Inject 50\% conflicting evidence by replacing retrieved passages with rank 5-15 documents (topically similar but potentially contradictory).
+
+\textbf{Goal:} Stress-test verification under imperfect retrieval.
+
+\subsubsection{Experiment 3: Forced-Answer Mode ($N=50$)}
+
+Modify prompt to disallow abstention:
+\begin{quote}
+\textit{``You MUST provide a definitive answer (yes/no/maybe). Do NOT say `I don't know' or `no information found.' Make your best inference from available passages.''}
+\end{quote}
+
+\textbf{Goal:} Force model to commit to answers, revealing verification blind spots.
+
+\subsubsection{Experiment 4: Ablation Studies ($N=50$)}
+
+\begin{itemize}
+\item \textbf{Threshold sweep:} $\tau \in \{0.3, 0.5, 0.7, 0.9\}$
+\item \textbf{Retrieval size:} $k \in \{1, 3, 5, 10\}$
+\end{itemize}
+
+\textbf{Goal:} Determine whether parameter tuning can fix false positives.
+
+\subsection{Evaluation Metrics}
+
+\begin{itemize}
+\item \textbf{Accuracy:} Fraction of correct answer labels
+\item \textbf{Unsupported Claim Rate:} Fraction of claims failing verification
+\item \textbf{Avg Claims per Answer:} Mean number of claims in final output
+\item \textbf{Runtime:} Mean seconds per example
+\end{itemize}
+
+\section{Results}
+
+\subsection{Main Findings: The 82\% False Positive Problem}
+
+Table~\ref{tab:main_results} shows results from the forced-answer experiment (Experiment 3), which revealed the core finding.
+
+\begin{table}[h]
+\centering
+\caption{Three-system comparison under forced-answer prompting ($N=50$, $\tau=0.5$, $k=3$). All systems achieve 0\% unsupported claims but only 18\% accuracy, revealing an 82\% false positive rate.}
+\label{tab:main_results}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{System} & \textbf{Accuracy} & \textbf{Unsupported Rate} & \textbf{Avg Claims} & \textbf{Runtime (s)} \\
+\midrule
+RAG Baseline & 0.180 & 0.000 & 1.26 & 1.79 \\
+REMOVE & 0.180 & 0.000 & 1.26 & 2.30 \\
+REWRITE & 0.180 & 0.000 & 1.26 & 2.31 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Observation:} All three systems perform identically because GPT-4o produces no unsupported claims ($0\%$ unsupported rate). The repair strategy is never triggered.
+
+\textbf{Critical Finding:} Despite 100\% verification pass rate, accuracy is only 18\%. This means \textbf{82\% of examples (41/50) have wrong answers composed entirely of ``verified'' claims}.
+
+\subsection{Clean vs. Adversarial Retrieval}
+
+Table~\ref{tab:retrieval_conditions} shows results under different retrieval conditions.
+
+\begin{table}[h]
+\centering
+\caption{Performance under clean vs. adversarial retrieval ($N=100$, $\tau=0.5$, $k=3$).}
+\label{tab:retrieval_conditions}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Condition} & \textbf{Accuracy} & \textbf{Unsupported Rate} & \textbf{Avg Claims} & \textbf{Notes} \\
+\midrule
+Clean Retrieval & 0.23 & 0.000 & 1.4 & No noise \\
+50\% Conflicting & 0.19 & 0.000 & 1.3 & Rank 5-15 injection \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Observation:} Even with 50\% conflicting evidence, GPT-4o maintains 0\% unsupported claims. The model simply ignores conflicting passages rather than producing verifiably wrong claims.
+
+\subsection{Ablation Studies}
+
+\subsubsection{Threshold Sensitivity}
+
+Table~\ref{tab:threshold_ablation} shows effect of varying NLI threshold $\tau$.
+
+\begin{table}[h]
+\centering
+\caption{Threshold sensitivity analysis ($N=50$, $k=3$, forced-answer mode).}
+\label{tab:threshold_ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Threshold ($\tau$)} & \textbf{Unsupported Rate} & \textbf{Accuracy} & \textbf{Interpretation} \\
+\midrule
+0.3 & 0.00 & 0.18 & Too permissive \\
+0.5 & 0.00 & 0.18 & \textbf{Current (still permissive)} \\
+0.7 & 0.02 & 0.19 & Minimal improvement \\
+0.9 & 0.15 & 0.22 & Rejects some hedges, but also valid claims \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Finding:} Higher thresholds provide minimal accuracy improvement because hedged claims (``may exist'') are still semantically entailed by passages. Extreme thresholds (0.9) start rejecting valid claims (false negatives).
+
+\subsubsection{Retrieval Size}
+
+Table~\ref{tab:k_ablation} shows effect of varying top-$k$ passages.
+
+\begin{table}[h]
+\centering
+\caption{Retrieval size ablation ($N=50$, $\tau=0.5$, forced-answer mode).}
+\label{tab:k_ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Top-$k$} & \textbf{Unsupported Rate} & \textbf{Accuracy} & \textbf{Avg Claims} \\
+\midrule
+$k=1$ & 0.00 & 0.14 & 1.1 \\
+$k=3$ & 0.00 & 0.18 & 1.3 \\
+$k=5$ & 0.00 & 0.20 & 1.4 \\
+$k=10$ & 0.00 & 0.22 & 1.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Finding:} More passages improve accuracy slightly (more evidence), but unsupported rate remains 0\% across all settings.
+
+\subsection{Summary of All Experiments}
+
+Across \textbf{4 experimental conditions} (clean, adversarial, forced-answer, ablations) and \textbf{250+ examples}, GPT-4o consistently exhibited:
+\begin{itemize}
+\item 0\% unsupported claim rate (100\% verification pass)
+\item 18-23\% accuracy on yes/no/maybe questions
+\item No benefit from verification-based repair strategies
+\end{itemize}
+
+This led to the realization that \textbf{verification success ≠ answer correctness}, motivating the false positive analysis.
+
+\section{Verifier Failure Analysis}
+
+To understand the 82\% false positive problem, we conducted a detailed manual analysis of all 41 wrong answers from Experiment 3 (forced-answer mode).
+
+\subsection{Methodology}
+
+For each of the 41 false positive examples:
+\begin{enumerate}
+\item Extract generated claims
+\item Record gold label vs. predicted label
+\item Analyze claim text for evasion patterns
+\item Categorize failure mode
+\end{enumerate}
+
+\subsection{Failure Mode Taxonomy}
+
+We identified the following categories:
+
+\begin{description}
+\item[\textbf{Hedging (71\%):}] Claims use vague language (``may,'' ``suggests,'' ``less understood'') that avoids committing to yes/no.
+\item[\textbf{Overgeneralization (2\%):}] Definitive claims when should hedge (wrong for ``maybe'' answers).
+\item[\textbf{Other (27\%):}] Missing qualifiers, wrong focus, etc. (requires further categorization).
+\end{description}
+
+Table~\ref{tab:failure_modes} shows the quantitative distribution.
+
+\begin{table}[h]
+\centering
+\caption{False positive failure mode distribution (41 examples, forced-answer mode).}
+\label{tab:failure_modes}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Failure Mode} & \textbf{Count} & \textbf{\% of False Positives} \\
+\midrule
+Hedging & 29 & 70.7\% \\
+Overgeneralization & 1 & 2.4\% \\
+Uncategorized & 11 & 26.8\% \\
+\midrule
+\textbf{Total False Positives} & \textbf{41} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Representative Examples}
+
+\subsubsection{Example 1: Hedging Away from ``YES''}
+
+\textbf{Question:} \textit{Do mitochondria play a role in remodelling lace plant leaves during programmed cell death?}\\
+\textbf{Gold Answer:} YES
+
+\textbf{GPT-4o Claim (Verified \checkmark):}
+\begin{quote}
+``Programmed cell death in the lace plant involves leaf perforations, and while the role of mitochondria in animal PCD is recognized, \textbf{it is less understood in plants.}''
+\end{quote}
+
+\textbf{Verifier Score:} \checkmark Supported (NLI entailment)
+
+\textbf{Why It's Wrong:}
+\begin{itemize}
+\item[\checkmark] Semantically supported (passage discusses mitochondrial research)
+\item[\texttimes] Doesn't answer YES—hedges with ``less understood''
+\item[\texttimes] Factually misleading—gold answer is definitively YES
+\end{itemize}
+
+\textbf{Why Verifier Fails:} ``Less understood'' is semantically close to passage content about research/studies, but avoids committing to the correct conclusion.
+
+\subsubsection{Example 2: Hedging Away from ``NO''}
+
+\textbf{Question:} \textit{Landolt C and Snellen E acuity: differences in strabismus amblyopia?}\\
+\textbf{Gold Answer:} NO
+
+\textbf{GPT-4o Claim (Verified \checkmark):}
+\begin{quote}
+``There is \textbf{some indication that differences may exist} in visual acuity measurements, but the specific nature is not detailed.''
+\end{quote}
+
+\textbf{Why It's Wrong:}
+\begin{itemize}
+\item[\checkmark] Semantically supported (passage mentions comparing tests)
+\item[\texttimes] Doesn't answer NO—hedges with ``may exist''
+\item[\texttimes] Gold answer is definitively NO
+\end{itemize}
+
+\subsubsection{Example 3: ``Promising'' Instead of ``YES''}
+
+\textbf{Question:} \textit{Can tailored interventions increase mammography use among HMO women?}\\
+\textbf{Gold Answer:} YES
+
+\textbf{GPT-4o Claim (Verified \checkmark):}
+\begin{quote}
+``Telephone counseling is \textbf{promising} but efficacy \textbf{has not been fully tested}.''
+\end{quote}
+
+\textbf{Why It's Wrong:}
+\begin{itemize}
+\item[\checkmark] Semantically supported (passage discusses these methods)
+\item[\texttimes] Doesn't answer YES—says ``not fully tested''
+\item[\texttimes] Undermines the correct affirmative answer
+\end{itemize}
+
+\subsection{Root Cause Analysis}
+
+\subsubsection{Why NLI Verification Fails}
+
+\textbf{1. Embeddings Conflate Related Concepts}
+
+Semantic similarity metrics (including NLI) struggle with subtle distinctions:
+\begin{itemize}
+\item ``may exist'' $\approx$ ``exists'' (both discuss existence)
+\item ``associated'' $\approx$ ``causes'' (both describe relationships)
+\item ``less understood'' $\approx$ ``plays a role'' (both mention concept)
+\end{itemize}
+
+\textbf{2. Passage-Level Matching is Too Coarse}
+
+\textit{Example:}
+\begin{itemize}
+\item \textbf{Claim:} ``Drug X is effective''
+\item \textbf{Passage:} ``Studies of Drug X show promise, but \textit{more research needed}''
+\item \textbf{Verifier:} \checkmark Both mention Drug X and effectiveness
+\end{itemize}
+
+The verifier misses the critical qualifier.
+
+\textbf{3. Hedging is Rewarded}
+
+\begin{itemize}
+\item Vague claims (``may,'' ``could'') almost always match \textit{something} in passage
+\item Precision is punished: specific wrong claims rejected, vague wrong claims pass
+\item GPT-4o learns to be maximally vague
+\end{itemize}
+
+\textbf{4. Question-Answer Alignment Not Checked}
+
+Verifier only checks $V(\text{claim}, \text{passage})$, not $V(\text{claim}, \text{question})$. GPT-4o can produce ``supported non-answers.''
+
+\section{Discussion}
+
+\subsection{Implications for RAG Deployment}
+
+\subsubsection{When Similarity-Based Verification Fails}
+
+\begin{enumerate}
+\item \textbf{High-Calibration Models (GPT-4o, Claude 3.5):} Produce plausible hedged claims that exploit verification
+\item \textbf{Yes/No Questions:} Hedged responses pass verification but don't commit to answers
+\item \textbf{Biomedical/Scientific Domains:} Subtle qualifiers critical for correctness
+\end{enumerate}
+
+\subsubsection{When Verification Still Helps}
+
+\begin{enumerate}
+\item \textbf{Lower-Quality Models:} That produce blatantly wrong claims
+\item \textbf{Open-Ended Generation:} Where hedging is acceptable
+\item \textbf{Attribution Transparency:} Even if imperfect correctness filter
+\end{enumerate}
+
+\subsection{Recommendations}
+
+\subsubsection{1. Beyond Semantic Similarity}
+
+Need factual consistency checking, not just semantic overlap:
+\begin{itemize}
+\item Question-answering entailment (does claim answer question correctly?)
+\item Structured fact extraction + KB verification
+\item Multi-hop reasoning verification
+\item Confidence calibration (reject hedged answers for yes/no)
+\end{itemize}
+
+\subsubsection{2. Accuracy-Aware Evaluation}
+
+\textbf{Current:} Unsupported claim rate\\
+\textbf{Problem:} Ignores ``supported but wrong''
+
+\textbf{Proposed:}
+\[
+\text{Verified Correctness} = \frac{\text{supported} \wedge \text{correct}}{\text{total}}
+\]
+
+\subsubsection{3. Domain-Specific Verification}
+
+Biomedical RAG needs:
+\begin{itemize}
+\item Qualifier preservation (in vitro, in mice, preliminary)
+\item Causal language detection (correlation vs causation)
+\item Certainty level matching
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{enumerate}
+\item \textbf{Sample Size:} Primary analysis on 50 examples (though supported by 250+ across all experiments)
+\item \textbf{Single Domain:} PubMedQA only (biomedical yes/no questions)
+\item \textbf{Single Model:} GPT-4o (though this is state-of-the-art)
+\item \textbf{Manual Categorization:} 27\% false positives remain uncategorized
+\end{enumerate}
+
+\subsection{Future Work}
+
+\begin{enumerate}
+\item Implement question-aware verification mechanism
+\item Test on additional domains (legal, scientific)
+\item Compare multiple generation models (Claude, Llama)
+\item Develop automated failure mode detection
+\item Explore adversarial training to discourage hedging
+\end{enumerate}
+
+\section{Conclusion}
+
+This work began with the hypothesis that claim-level NLI verification could reduce hallucinations in RAG systems. Through systematic experimentation, we discovered a more fundamental problem: \textbf{similarity-based verification exhibits an 82\% false positive rate} when applied to outputs from high-calibration models like GPT-4o.
+
+Our key findings are:
+
+\begin{enumerate}
+\item GPT-4o achieves 0\% unsupported claim rate across clean, adversarial, and forced-answer conditions
+\item Despite 100\% verification pass rate, accuracy is only 18\% (82\% false positives)
+\item The dominant failure mode is \textbf{strategic hedging} (71\% of cases): models produce vague claims that pass semantic checks but avoid answer commitment
+\item Threshold tuning provides minimal improvement because hedged claims are semantically entailed
+\end{enumerate}
+
+\textbf{Broader Implication:} As LLMs become more sophisticated, they learn to \textit{exploit} verification systems rather than being constrained by them. Semantic similarity verification creates perverse incentives for equivocation over precision.
+
+\textbf{Recommended Solution:} Future verification systems must go beyond semantic plausibility to enforce:
+\begin{itemize}
+\item Direct question-answer alignment
+\item Certainty level matching
+\item Qualifier preservation
+\item Factual correctness over semantic similarity
+\end{itemize}
+
+This work demonstrates that the challenge in modern RAG is not detecting blatant hallucinations—which state-of-the-art models largely avoid—but ensuring semantic similarity translates to factual accuracy, a problem current verification approaches systematically fail to solve.
+
+\section*{Acknowledgments}
+
+The author thanks the CS 592 course staff for guidance on this project. All experiments were conducted using OpenAI's GPT-4o API and Hugging Face's open-source NLI models.
+
+\begin{thebibliography}{9}
+
+\bibitem{brown2020language}
+Brown, T., et al. (2020).
+Language models are few-shot learners.
+\textit{Advances in Neural Information Processing Systems}, 33, 1877-1901.
+
+\bibitem{ji2023survey}
+Ji, Z., et al. (2023).
+Survey of hallucination in natural language generation.
+\textit{ACM Computing Surveys}, 55(12), 1-38.
+
+\bibitem{lewis2020retrieval}
+Lewis, P., et al. (2020).
+Retrieval-augmented generation for knowledge-intensive NLP tasks.
+\textit{Advances in Neural Information Processing Systems}, 33, 9459-9474.
+
+\bibitem{gao2023rarr}
+Gao, L., et al. (2023).
+RARR: Researching and revising what language models say, using language models.
+\textit{Proceedings of ACL}, 5910-5927.
+
+\bibitem{bohnet2022attributed}
+Bohnet, B., et al. (2022).
+Attributed question answering: Evaluation and modeling for attributed large language models.
+\textit{arXiv preprint arXiv:2212.08037}.
+
+\bibitem{openai2024gpt4o}
+OpenAI. (2024).
+GPT-4o: Improvements in reasoning and multimodal capabilities.
+Technical Report.
+
+\bibitem{jin2019pubmedqa}
+Jin, Q., et al. (2019).
+PubMedQA: A dataset for biomedical research question answering.
+\textit{Proceedings of EMNLP-IJCNLP}, 2567-2577.
+
+\bibitem{izacard2021leveraging}
+Izacard, G., \& Grave, E. (2021).
+Leveraging passage retrieval with generative models for open domain question answering.
+\textit{Proceedings of EACL}, 874-880.
+
+\bibitem{honovich2021qags}
+Honovich, O., et al. (2021).
+Q\textsuperscript{2}: Evaluating factual consistency in knowledge-grounded dialogues via question generation and question answering.
+\textit{Proceedings of EMNLP}, 7856-7870.
+
+\bibitem{maynez2020faithfulness}
+Maynez, J., et al. (2020).
+On faithfulness and factuality in abstractive summarization.
+\textit{Proceedings of ACL}, 1906-1919.
+
+\bibitem{durmus2020feqa}
+Durmus, E., et al. (2020).
+FEQA: A question answering evaluation framework for faithfulness assessment in abstractive summarization.
+\textit{Proceedings of ACL}, 5055-5070.
+
+\bibitem{guo2017calibration}
+Guo, C., et al. (2017).
+On calibration of modern neural networks.
+\textit{Proceedings of ICML}, 1321-1330.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,148 @@
+% ============================================================================
+% FIGURES FOR FINAL REPORT - LaTeX Inclusion Guide
+% ============================================================================
+% Copy these \begin{figure}...\end{figure} blocks into your FINAL_REPORT.tex
+% at the appropriate locations indicated below.
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% FIGURE 1: Pipeline Diagram
+% Location: After Section 4 (System Architecture)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figure1_pipeline.pdf}
+\caption{Overview of the three-system experimental architecture. All systems share identical retrieval (FAISS) and generation (GPT-4o) components, differing only in the post-verification repair strategy: System A (baseline) performs no repair, System B (REMOVE) deletes unsupported claims, and System C (REWRITE) rewrites unsupported claims. The verification layer rarely triggers because GPT-4o produces claims that pass NLI checks.}
+\label{fig:pipeline}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 2: Main Results - The False Positive Problem
+% Location: Right after Table 1 in Section 6 (Results)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figure2_main_results.pdf}
+\caption{Despite perfect verification pass rates (0\% unsupported claims), answer accuracy remains low (18\%) across all three systems, revealing an 82\% false positive problem where semantically verified claims contribute to factually incorrect answers. This demonstrates that high verification success does not guarantee factual correctness.}
+\label{fig:main_results}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 3: Clean vs Adversarial Retrieval
+% Location: Right after Table 2 in Section 6.2 (retrieval conditions)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figure3_retrieval_comparison.pdf}
+\caption{Performance comparison between clean retrieval and adversarial retrieval (50\% conflicting evidence from rank 5-15 documents). While adversarial retrieval degrades accuracy from 23\% to 19\%, the unsupported claim rate remains at 0\% in both conditions, demonstrating that the verifier fails to detect quality degradation from conflicting evidence.}
+\label{fig:retrieval_comparison}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 4: Threshold Sensitivity Analysis
+% Location: Right after Table 3 in Section 6.3.1 (threshold ablation)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figure4_threshold_ablation.pdf}
+\caption{Effect of varying NLI threshold $\tau$ on accuracy and unsupported claim rate. Increasing the threshold from 0.5 to 0.9 provides only marginal accuracy improvements (18\% $\to$ 22\%) while beginning to reject valid claims (unsupported rate rises to 15\%). This demonstrates that threshold tuning cannot fix the false positive problem, as hedged claims remain semantically entailed even at high thresholds.}
+\label{fig:threshold_ablation}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 5: Retrieval Size Ablation
+% Location: Right after Table 4 in Section 6.3.2 (retrieval size ablation)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figure5_retrieval_size_ablation.pdf}
+\caption{Effect of varying the number of retrieved passages $k$ on system performance. While increasing $k$ from 1 to 10 improves accuracy modestly (14\% $\to$ 22\%), the unsupported claim rate remains at 0\% across all settings, confirming that GPT-4o produces claims that consistently pass verification regardless of retrieval size.}
+\label{fig:retrieval_size_ablation}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 6: Failure Mode Distribution
+% Location: Right after Table 5 in Section 7 (Verifier Failure Analysis)
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figure6_failure_modes.pdf}
+\caption{Distribution of failure modes among 41 false positive cases from the forced-answer experiment. Strategic hedging dominates at 71\% (29 cases), where the model produces vague claims (``may exist,'' ``less understood'') that pass NLI verification but avoid committing to definitive yes/no answers. Overgeneralization accounts for only 2\% (1 case), with the remaining 27\% requiring further categorization.}
+\label{fig:failure_modes}
+\end{figure}
+
+
+% ----------------------------------------------------------------------------
+% FIGURE 7: False Positive Breakdown
+% Location: Near end of Section 6 or beginning of Section 7
+% ----------------------------------------------------------------------------
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figure7_false_positive_breakdown.pdf}
+\caption{Breakdown of the 50 forced-answer examples by verification status and correctness. Only 9 examples (18\%) are both verified and correct. The remaining 41 examples (82\%) are false positives—claims that pass NLI verification but contribute to wrong answers. No examples are flagged as unsupported, highlighting the systematic failure of similarity-based verification.}
+\label{fig:false_positive_breakdown}
+\end{figure}
+
+
+% ============================================================================
+% ADDITIONAL LATEX TIPS
+% ============================================================================
+
+% 1. Make sure you have this in your preamble:
+%    \usepackage{graphicx}
+
+% 2. To reference figures in text:
+%    As shown in Figure~\ref{fig:main_results}, ...
+
+% 3. If figures appear in wrong locations, try:
+%    \usepackage{float}
+%    Then use [H] instead of [htbp]: \begin{figure}[H]
+
+% 4. To make figures span two columns (if using two-column format):
+%    \begin{figure*}[htbp]
+%    ...
+%    \end{figure*}
+
+% 5. Common placement specifiers:
+%    h = here (approximately)
+%    t = top of page
+%    b = bottom of page
+%    p = separate page
+%    ! = override LaTeX placement rules
+%    H = exactly here (requires \usepackage{float})
+
+% ============================================================================
+% EXAMPLE: How to include multiple subfigures
+% ============================================================================
+% If you want to combine figures 4 and 5 into one figure with subfigures:
+
+% \usepackage{subcaption}  % Add to preamble
+%
+% \begin{figure}[htbp]
+% \centering
+% \begin{subfigure}{0.48\textwidth}
+%     \includegraphics[width=\textwidth]{figure4_threshold_ablation.pdf}
+%     \caption{Threshold sensitivity}
+%     \label{fig:threshold}
+% \end{subfigure}
+% \hfill
+% \begin{subfigure}{0.48\textwidth}
+%     \includegraphics[width=\textwidth]{figure5_retrieval_size_ablation.pdf}
+%     \caption{Retrieval size ablation}
+%     \label{fig:retrieval_size}
+% \end{subfigure}
+% \caption{Ablation studies showing minimal impact of parameter tuning.}
+% \label{fig:ablations}
+% \end{figure}

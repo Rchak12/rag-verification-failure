@@ -1,0 +1,9 @@
+System Settings:
+
+Dataset: PubMedQA (qiaojin/PubMedQA, pqa_labeled)
+Samples tested: 40
+Retriever: sentence-transformer embeddings + FAISS
+Embedding model: sentence-transformers/all-MiniLM-L6-v2
+LLM used: stub (rule-based generation, no external LLM)
+Verification threshold: 0.55
+Top-k retrieval: 3

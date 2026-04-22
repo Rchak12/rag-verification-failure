@@ -1,0 +1,15 @@
+Overall Experiment Summary
+
+Total samples tested: 40
+
+RAG Baseline:
+Unsupported Claim Rate: 0.3333
+Accuracy: 0.45
+Average Claims per Answer: 3.0
+Average Runtime: 0.0004s
+
+Verified RAG:
+Unsupported Claim Rate: 0.0
+Accuracy: 0.45
+Average Claims per Answer: 2.0
+Average Runtime: 3.7738s

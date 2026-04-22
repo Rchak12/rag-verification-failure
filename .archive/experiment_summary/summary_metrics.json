@@ -1,0 +1,26 @@
+{
+  "experimental_setup": {
+    "dataset": "PubMedQA (qiaojin/PubMedQA, pqa_labeled)",
+    "n_examples": 40,
+    "seed": 42,
+    "k": 3,
+    "tau": 0.55,
+    "verification": "cosine similarity (sentence-transformers/all-MiniLM-L6-v2)",
+    "repair": "delete unsupported claims",
+    "generation_backend": "stub"
+  },
+  "results": {
+    "rag": {
+      "accuracy": 0.45,
+      "unsupported_rate": 0.3333,
+      "avg_claims": 3.0,
+      "mean_runtime_s": 0.0004
+    },
+    "verified_rag": {
+      "accuracy": 0.45,
+      "unsupported_rate": 0.0,
+      "avg_claims": 2.0,
+      "mean_runtime_s": 3.7738
+    }
+  }
+}

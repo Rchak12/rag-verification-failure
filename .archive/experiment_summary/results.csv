@@ -1,0 +1,41 @@
+id,question,gold_label,rag_prediction,rag_correct,rag_n_claims,rag_n_unsupported,rag_unsup_rate,rag_runtime_s,vrag_prediction,vrag_correct,vrag_n_claims,vrag_n_unsupported,vrag_unsup_rate,vrag_runtime_s,repair_applied
+21645374,Do mitochondria play a role in remodelling lace plant leaves during programmed cell death?,yes,yes,1,3,1,0.3333,0.0011,yes,1,2,0,0.0,3.3124,True
+16418930,Landolt C and snellen e acuity: differences in strabismus amblyopia?,no,maybe,0,3,1,0.3333,0.0001,maybe,0,2,0,0.0,2.8316,True
+9488747,"Syncope during bathing in infants, a pediatric form of water-induced urticaria?",yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,5.3857,True
+17208539,Are the long-term results of the transanal pull-through equal to those of the transabdominal pull-through?,no,yes,0,3,1,0.3333,0.0003,yes,0,2,0,0.0,3.7707,True
+10808977,Can tailored interventions increase mammography use among HMO women?,yes,yes,1,3,1,0.3333,0.0015,yes,1,2,0,0.0,2.9145,True
+23831910,Double balloon enteroscopy: is it efficacious and safe in a community setting?,yes,maybe,0,3,1,0.3333,0.0003,maybe,0,2,0,0.0,4.0232,True
+26037986,30-Day and 1-year mortality in emergency general surgery laparotomies: an area of concern and need for improvement?,maybe,yes,0,3,1,0.3333,0.0005,yes,0,2,0,0.0,2.0756,True
+26852225,Is adjustment for reporting heterogeneity necessary in sleep disorders?,no,yes,0,3,1,0.3333,0.0005,yes,0,2,0,0.0,3.5396,True
+17113061,Do mutations causing low HDL-C promote increased carotid intima-media thickness?,no,yes,0,3,1,0.3333,0.0002,yes,0,2,0,0.0,3.5888,True
+10966337,A short stay or 23-hour ward in a general and academic children's hospital: are they effective?,yes,yes,1,3,1,0.3333,0.0002,yes,1,2,0,0.0,3.5341,True
+25432938,Did Chile's traffic law reform push police enforcement?,yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,3.0627,True
+18847643,Therapeutic anticoagulation in the trauma patient: is it safe?,no,yes,0,3,1,0.3333,0.0001,yes,0,2,0,0.0,2.8228,True
+18239988,Differentiation of nonalcoholic from alcoholic steatohepatitis: are routine laboratory markers useful?,yes,maybe,0,3,1,0.3333,0.0001,maybe,0,2,0,0.0,4.1363,True
+25957366,Prompting Primary Care Providers about Increased Patient Risk As a Result of Family History: Does It Work?,no,no,1,3,1,0.3333,0.0003,no,1,2,0,0.0,4.5182,True
+24866606,Do emergency ultrasound fellowship programs impact emergency medicine residents' ultrasound education?,yes,yes,1,3,1,0.3333,0.0005,yes,1,2,0,0.0,4.615,True
+26578404,Patient-Controlled Therapy of Breathlessness in Palliative Care: A New Therapeutic Concept for Opioid Administration?,yes,yes,1,3,1,0.3333,0.0006,yes,1,2,0,0.0,2.8407,True
+11729377,Is there still a need for living-related liver transplantation in children?,yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,4.1751,True
+17096624,Do patterns of knowledge and attitudes exist among unvaccinated seniors?,yes,maybe,0,3,1,0.3333,0.0002,maybe,0,2,0,0.0,2.929,True
+22694248,Is there a model to teach and practice retroperitoneoscopic nephrectomy?,yes,maybe,0,3,1,0.3333,0.0002,maybe,0,2,0,0.0,2.8999,True
+22990761,Cardiovascular risk in a rural adult West African population: is resting heart rate also relevant?,yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,3.8069,True
+19394934,Israeli hospital preparedness for terrorism-related multiple casualty incidents: can the surge capacity and injury severity distribution be better predicted?,yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,3.6941,True
+11481599,Acute respiratory distress syndrome in children with malignancy--can we predict outcome?,yes,yes,1,3,1,0.3333,0.0002,yes,1,2,0,0.0,3.4218,True
+21669959,Secondhand smoke risk in infants discharged from an NICU: potential for significant health disparities?,yes,maybe,0,3,1,0.3333,0.0006,maybe,0,2,0,0.0,3.0566,True
+23806388,Do nomograms designed to predict biochemical recurrence (BCR) do a better job of predicting more clinically relevant prostate cancer outcomes than BCR?,yes,yes,1,3,1,0.3333,0.0003,yes,1,2,0,0.0,5.9171,True
+17919952,Are reports of mechanical dysfunction in chronic oro-facial pain related to somatisation?,yes,yes,1,3,1,0.3333,0.0004,yes,1,2,0,0.0,5.8384,True
+10966943,Amblyopia: is visual loss permanent?,no,maybe,0,3,1,0.3333,0.0004,maybe,0,2,0,0.0,2.4019,True
+23690198,Implementation of epidural analgesia for labor: is the standard of effective analgesia reachable in all women?,yes,yes,1,3,1,0.3333,0.0002,yes,1,2,0,0.0,5.4089,True
+17940352,Does HER2 immunoreactivity provide prognostic information in locally advanced urothelial carcinoma patients receiving adjuvant M-VEC chemotherapy?,maybe,yes,0,3,1,0.3333,0.0003,yes,0,2,0,0.0,5.7399,True
+20537205,Is halofantrine ototoxic?,yes,maybe,0,3,1,0.3333,0.0003,maybe,0,2,0,0.0,3.7128,True
+28707539,Visceral adipose tissue area measurement at a single level: can it represent visceral adipose tissue volume?,yes,maybe,0,3,1,0.3333,0.0004,maybe,0,2,0,0.0,2.7362,True
+7482275,Necrotizing fasciitis: an indication for hyperbaric oxygenation therapy?,no,yes,0,3,1,0.3333,0.0001,yes,0,2,0,0.0,2.5221,True
+24183388,Is the Hawkins sign able to predict necrosis in fractures of the neck of the astragalus?,maybe,yes,0,3,1,0.3333,0.0002,yes,0,2,0,0.0,5.4475,True
+9645785,Is a mandatory general surgery rotation necessary in the surgical clerkship?,no,no,1,3,1,0.3333,0.0002,no,1,2,0,0.0,2.3782,True
+26298839,Is Acupuncture Efficacious for Treating Phonotraumatic Vocal Pathologies?,yes,yes,1,3,1,0.3333,0.0002,yes,1,2,0,0.0,5.092,True
+24153338,Is aneurysm repair justified for the patients aged 80 or older after aneurysmal subarachnoid hemorrhage?,yes,no,0,3,1,0.3333,0.0001,no,0,2,0,0.0,2.6592,True
+18534072,Do general practice characteristics influence uptake of an information technology (IT) innovation in primary care?,no,yes,0,3,1,0.3333,0.0002,yes,0,2,0,0.0,4.1095,True
+8847047,Prognosis of well differentiated small hepatocellular carcinoma--is well differentiated hepatocellular carcinoma clinically early cancer?,no,no,1,3,1,0.3333,0.0003,no,1,2,0,0.0,3.6248,True
+10575390,Do follow-up recommendations for abnormal Papanicolaou smears influence patient adherence?,no,yes,0,3,1,0.3333,0.0029,yes,0,2,0,0.0,4.3951,True
+20084845,Biomolecular identification of allergenic pollen: a new perspective for aerobiological monitoring?,yes,maybe,0,3,1,0.3333,0.0003,maybe,0,2,0,0.0,3.9263,True
+15703931,Does diabetes mellitus influence the efficacy of FDG-PET in the diagnosis of cervical cancer?,no,yes,0,3,1,0.3333,0.0003,yes,0,2,0,0.0,4.0875,True

@@ -1,0 +1,3 @@
+One Failure Case:
+
+In this case, the verification system incorrectly removed a claim that was actually correct due to a paraphrase mismatch. The claim "Further longitudinal studies with larger sample sizes are needed to establish definitive causal relationships in this domain" was deleted because its cosine similarity score to the retrieved evidence was only 0.313, below the threshold of 0.55. However, the claim is a reasonable generalization from the passage content, highlighting the limitation of embedding-based similarity for detecting entailment in paraphrased or abstract claims.

@@ -1,0 +1,98 @@
+% ============================================================================
+% FIGURE 8: Controlled Repair Test Results
+% Location: In new Section 6.4 "Controlled Repair Activation Test"
+%           OR in Section 7 "Verifier Failure Analysis"
+%           OR in Section 8 "Discussion"
+% ============================================================================
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{figure8_repair_test.pdf}
+\caption{Results of controlled repair activation test (N=20) where false positive
+cases were forced through REWRITE by manually marking all claims as unsupported.
+While repair successfully removed explicit hedging keywords ("may," "might,"
+"suggests"), it replaced them with epistemic disclaimers ("remains less studied,"
+"not detailed in the evidence") that still avoid definitive yes/no commitment.
+Accuracy improved by only 5\% (0\% $\to$ 5\%), with 95\% of cases maintaining
+"maybe" answers. This demonstrates that repair shares verification's fundamental
+limitation: semantic similarity cannot detect epistemic evasion strategies that
+models employ to avoid commitment.}
+\label{fig:repair_test}
+\end{figure}
+
+
+% ============================================================================
+% HOW TO ADD THIS TO YOUR REPORT
+% ============================================================================
+
+% OPTION 1: New subsection in Results (RECOMMENDED)
+% Add after Section 6.3 (Ablation Studies):
+
+\subsection{Controlled Repair Activation Test}
+
+To isolate whether repair effectiveness is limited by verification failure or by
+inherent limitations of the repair mechanism itself, we conducted a controlled
+experiment. We selected 20 false positive cases where verification incorrectly
+marked hedged claims as supported, manually forced all claims to be flagged as
+unsupported, and measured whether REWRITE could fix the errors when properly
+triggered.
+
+Figure~\ref{fig:repair_test} shows the results. Despite successfully removing
+explicit hedging keywords (100\% $\to$ 0\%), accuracy improved by only 5\%
+(0\% $\to$ 5\%), with 19 out of 20 cases remaining incorrect. Analysis reveals
+that while hedging keywords disappeared, they were replaced by epistemic
+disclaimers (0\% $\to$ 95\%) such as ``remains less studied compared to animals''
+or ``specific results are not detailed in the evidence.'' These new formulations
+pass NLI verification because they maintain semantic similarity to the passages,
+but they still avoid committing to definitive yes/no answers---95\% of rewritten
+cases retained ``maybe'' as the answer label.
+
+This reveals a \textbf{second failure point} beyond verification: the repair
+mechanism itself cannot enforce answer commitment because it relies on the same
+semantic similarity principle. Both verification and repair are vulnerable to the
+epistemic evasion strategies that GPT-4o employs, demonstrating that fixing
+verification alone is insufficient. The entire similarity-based approach requires
+fundamental redesign to enforce definitiveness in generated claims.
+
+
+% ============================================================================
+% OPTION 2: Add to Discussion Section
+% ============================================================================
+
+Our controlled repair test (\S6.4, Figure~\ref{fig:repair_test}) confirms that
+the problem extends beyond verification to the repair mechanism itself. When we
+manually forced repair activation on 20 false positive cases, accuracy improved
+by only 5\% (from 0\% to 5\%), demonstrating that REWRITE cannot fix the
+underlying issue even when properly triggered. The repair mechanism successfully
+removed hedging keywords but replaced them with epistemic disclaimers that still
+pass NLI checks while avoiding commitment---revealing that semantic similarity is
+fundamentally inadequate for enforcing answer definitiveness at \textit{both}
+the verification and repair stages.
+
+
+% ============================================================================
+% OPTION 3: Add to Future Work
+% ============================================================================
+
+Future systems need improvements at \textit{both} verification and repair stages.
+Our controlled repair test (Figure~\ref{fig:repair_test}) showed that forced
+repair activation improved accuracy by only 5\% (0\% $\to$ 5\%) because the
+mechanism replaced hedging keywords with epistemic disclaimers that still avoid
+commitment. This suggests the need for: (1) question-aware verification that
+detects epistemic evasion beyond keyword matching, and (2) repair mechanisms with
+explicit anti-hedging constraints that enforce definitive yes/no answers through
+iterative rewriting with verification of repaired claims.
+
+
+% ============================================================================
+% REFERENCES IN TEXT
+% ============================================================================
+
+% Use these patterns to reference the figure:
+
+% "As shown in Figure~\ref{fig:repair_test}, repair barely improves accuracy..."
+
+% "The controlled repair test (Figure~\ref{fig:repair_test}) reveals..."
+
+% "Figure~\ref{fig:repair_test} demonstrates that repair shares verification's
+%  fundamental limitation..."
